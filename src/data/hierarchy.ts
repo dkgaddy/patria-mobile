@@ -2,11 +2,13 @@ import { hierarchy, tree } from 'd3-hierarchy';
 import type { HierarchyNode } from 'd3-hierarchy';
 import type { PersonRecord, PositionedNode, PositionedLink, SpouseInfo, AppData } from './types';
 
-export const NW = 86;
-export const NH = 116;
+export const NW   = 86;
+export const NH   = 116;
 export const NS_W = 220;
 export const NS_H = 200;
 export const AV_R = 33;
+export const AV_CX = NW / 2;   // 43
+export const AV_CY = AV_R + 5; // 38
 
 // Raw tree node (pre-layout)
 export interface TreeNodeDatum {

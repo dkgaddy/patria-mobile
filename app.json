@@ -1,22 +1,22 @@
 {
   "expo": {
-    "name": "patria-mobile",
+    "name": "Patria",
     "slug": "patria-mobile",
     "version": "1.0.0",
-    "orientation": "portrait",
+    "orientation": "default",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "dark",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#1a0e08"
     },
     "ios": {
       "supportsTablet": true
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#1a0e08",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -28,7 +28,11 @@
     },
     "plugins": [
       "expo-image",
-      "expo-asset"
+      "expo-asset",
+      "react-native-gesture-handler"
+    ],
+    "assetBundlePatterns": [
+      "assets/**"
     ]
   }
 }
