@@ -23,19 +23,23 @@ function parseCSV<T>(text: string): T[] {
 }
 
 export async function loadAppData(): Promise<AppData> {
+  console.log('[loadData] loading assets...');
   // Load CSVs in parallel
   const [personsText, labelsText, relsText] = await Promise.all([
     readAssetText(ASSETS.persons),
     readAssetText(ASSETS.labels),
     readAssetText(ASSETS.rels),
   ]);
+  console.log('[loadData] CSVs loaded, lengths:', personsText.length, labelsText.length, relsText.length);
 
   const persons = parseCSV<PersonRecord>(personsText);
   const labels  = parseCSV<LabelRecord>(labelsText);
   const rels    = parseCSV<RelRecord>(relsText);
 
+  console.log('[loadData] parsing CSVs...');
   // Verse map is bundled JSON — require() loads it synchronously
   const verseMap: Record<string, string> = ASSETS.bibletext;
+  console.log('[loadData] verseMap keys:', Object.keys(verseMap).length);
 
   // Build persons map
   const personsMap: Record<string, PersonRecord> = {};

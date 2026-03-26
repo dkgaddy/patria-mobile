@@ -44,11 +44,15 @@ export default function App() {
   useEffect(() => {
     (async () => {
       try {
+        console.log('[Patria] loadAppData start');
         const data: AppData = await loadAppData();
+        console.log('[Patria] loadAppData done, persons:', Object.keys(data.personsMap).length);
         const layout = buildHierarchy(data);
+        console.log('[Patria] buildHierarchy done');
         setAppData(data, layout);
         setStatus('ready');
       } catch (e: any) {
+        console.error('[Patria] load error:', e);
         setDataError(e?.message ?? String(e));
         setStatus('error');
       }
