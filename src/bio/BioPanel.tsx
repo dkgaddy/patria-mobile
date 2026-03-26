@@ -13,7 +13,7 @@ const IMAGE_BASE = 'https://patria.explosiveconcepts.com/pix/';
 const SNAP_POINTS = ['35%', '85%'];
 
 interface BioPanelProps {
-  sheetRef: React.RefObject<BottomSheet | null>;
+  sheetRef: React.RefObject<BottomSheet>;
   personId: string | null;
   appData: AppData;
   navIndex: number;

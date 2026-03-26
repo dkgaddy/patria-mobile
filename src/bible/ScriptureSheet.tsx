@@ -5,7 +5,7 @@ import type { ScriptureRef } from './verseUtils';
 import { lookupVerses } from './verseUtils';
 
 interface ScriptureSheetProps {
-  sheetRef: React.RefObject<BottomSheet | null>;
+  sheetRef: React.RefObject<BottomSheet>;
   currentRef: ScriptureRef | null;
   verseMap: Record<string, string>;
 }

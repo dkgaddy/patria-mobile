@@ -9,7 +9,7 @@ import type { AppData } from '../data/types';
 import type { SearchResult } from './useSearch';
 
 interface SearchSheetProps {
-  sheetRef: React.RefObject<BottomSheet | null>;
+  sheetRef: React.RefObject<BottomSheet>;
   appData: AppData;
   onSelectPerson: (id: string) => void;
 }
