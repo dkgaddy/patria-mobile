@@ -1,9 +1,9 @@
 import React, { useCallback, useRef, useState } from 'react';
 import {
   StyleSheet, Text, View, TextInput,
-  TouchableOpacity, FlatList,
+  TouchableOpacity,
 } from 'react-native';
-import BottomSheet, { BottomSheetView } from '@gorhom/bottom-sheet';
+import BottomSheet, { BottomSheetView, BottomSheetFlatList } from '@gorhom/bottom-sheet';
 import { useSearch } from './useSearch';
 import type { AppData } from '../data/types';
 import type { SearchResult } from './useSearch';
@@ -52,7 +52,7 @@ export function SearchSheet({ sheetRef, appData, onSelectPerson }: SearchSheetPr
     <BottomSheet
       ref={sheetRef}
       index={-1}
-      snapPoints={['90%']}
+      snapPoints={['100%']}
       enablePanDownToClose
       backgroundStyle={styles.background}
       handleIndicatorStyle={styles.indicator}
@@ -68,7 +68,7 @@ export function SearchSheet({ sheetRef, appData, onSelectPerson }: SearchSheetPr
             ref={inputRef}
             style={styles.input}
             placeholder="Search people, tribes, descriptions…"
-            placeholderTextColor="#6a5a4a"
+            placeholderTextColor="#9a7a5a"
             value={query}
             onChangeText={setQuery}
             autoCorrect={false}
@@ -99,7 +99,7 @@ export function SearchSheet({ sheetRef, appData, onSelectPerson }: SearchSheetPr
           </View>
         )}
 
-        <FlatList
+        <BottomSheetFlatList
           data={results}
           keyExtractor={item => item.id}
           renderItem={renderItem}
@@ -112,25 +112,25 @@ export function SearchSheet({ sheetRef, appData, onSelectPerson }: SearchSheetPr
 }
 
 const styles = StyleSheet.create({
-  background:  { backgroundColor: '#1a0e08', borderWidth: 2, borderColor: 'rgba(201,160,80,0.4)', borderRadius: 16 },
-  indicator:   { backgroundColor: '#c9a050' },
+  background:  { backgroundColor: '#faf6ee', borderWidth: 1, borderColor: 'rgba(139,94,60,0.3)', borderRadius: 16 },
+  indicator:   { backgroundColor: '#8B5E3C' },
   container:   { flex: 1 },
 
-  searchBar:   { flexDirection: 'row', alignItems: 'center', backgroundColor: '#22140c', marginHorizontal: 16, marginBottom: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(201,160,80,0.3)', paddingHorizontal: 12, gap: 8 },
+  searchBar:   { flexDirection: 'row', alignItems: 'center', backgroundColor: '#ede6d8', marginHorizontal: 16, marginBottom: 8, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(139,94,60,0.25)', paddingHorizontal: 12, gap: 8 },
   searchIcon:  { fontSize: 16 },
-  input:       { flex: 1, color: '#e8ddd0', fontSize: 15, paddingVertical: 12 },
-  clearBtn:    { color: '#8a7060', fontSize: 16, padding: 4 },
+  input:       { flex: 1, color: '#2a1208', fontSize: 15, paddingVertical: 12 },
+  clearBtn:    { color: '#7a5a3a', fontSize: 16, padding: 4 },
   closeBtn:    { paddingLeft: 8 },
-  closeBtnText:{ color: '#c9a050', fontSize: 13, fontWeight: '700' },
+  closeBtnText:{ color: '#8B5E3C', fontSize: 13, fontWeight: '700' },
 
   emptyState:  { alignItems: 'center', paddingTop: 40, gap: 8 },
-  emptyText:   { color: '#8a7060', fontSize: 14 },
-  emptyHint:   { color: '#6a5a4a', fontSize: 12 },
+  emptyText:   { color: '#7a5a3a', fontSize: 14 },
+  emptyHint:   { color: '#9a7a5a', fontSize: 12 },
 
   list:        { paddingHorizontal: 16, paddingBottom: 40 },
-  resultRow:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.06)' },
+  resultRow:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.08)' },
   resultMain:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultName:  { color: '#e8ddd0', fontSize: 15, fontWeight: '600', flex: 1 },
-  resultTribe: { color: '#8a7060', fontSize: 12 },
-  resultSnippet:{ color: '#6a5a4a', fontSize: 11, marginTop: 3 },
+  resultName:  { color: '#2a1208', fontSize: 15, fontWeight: '600', flex: 1 },
+  resultTribe: { color: '#7a5a3a', fontSize: 12 },
+  resultSnippet:{ color: '#9a7a5a', fontSize: 11, marginTop: 3 },
 });

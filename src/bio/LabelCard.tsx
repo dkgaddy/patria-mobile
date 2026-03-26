@@ -76,13 +76,13 @@ function Row({ label, value }: { label: string; value: string }) {
 }
 
 const styles = StyleSheet.create({
-  card:    { backgroundColor: '#2a1a10', borderRadius: 6, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: '#c9a050' },
-  type:    { fontSize: 10, fontWeight: '700', color: '#c9a050', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
-  name:    { fontSize: 15, fontWeight: '600', color: '#e8ddd0', marginBottom: 2 },
-  hebrew:  { fontSize: 18, color: '#d4b880', marginBottom: 6, fontStyle: 'italic' },
+  card:    { backgroundColor: '#ede6d8', borderRadius: 6, padding: 12, marginBottom: 8, borderLeftWidth: 3, borderLeftColor: '#8B6914' },
+  type:    { fontSize: 10, fontWeight: '700', color: '#8B5E3C', letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
+  name:    { fontSize: 15, fontWeight: '600', color: '#2a1208', marginBottom: 2 },
+  hebrew:  { fontSize: 18, color: '#6a3e10', marginBottom: 6, fontStyle: 'italic' },
   rows:    { gap: 4 },
   rowItem: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  rowKey:  { fontSize: 11, color: '#8a7060', fontWeight: '600', minWidth: 90 },
-  rowVal:  { fontSize: 12, color: '#c8b8a8', flex: 1 },
-  notes:   { fontSize: 10, color: '#7a6a5a', marginTop: 6, fontStyle: 'italic' },
+  rowKey:  { fontSize: 11, color: '#7a5a3a', fontWeight: '600', minWidth: 90 },
+  rowVal:  { fontSize: 12, color: '#3a2010', flex: 1 },
+  notes:   { fontSize: 10, color: '#9a7a5a', marginTop: 6, fontStyle: 'italic' },
 });

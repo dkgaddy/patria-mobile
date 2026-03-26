@@ -6,17 +6,18 @@ import BottomSheet from '@gorhom/bottom-sheet';
 import { loadAppData } from './src/data/loadData';
 import { buildHierarchy } from './src/data/hierarchy';
 import { useAppStore } from './src/store/useAppStore';
+import { useTreeStore } from './src/store/useTreeStore';
 import { TreeCanvas } from './src/tree/TreeCanvas';
 import { BioPanel } from './src/bio/BioPanel';
 import { SearchSheet } from './src/search/SearchSheet';
 import type { AppData } from './src/data/types';
 
-function LoadingScreen({ phase }: { phase: string }) {
+function LoadingScreen() {
   return (
     <View style={styles.loading}>
-      <ActivityIndicator size="large" color="#c9a050" />
+      <ActivityIndicator size="large" color="#c8a85a" />
       <Text style={styles.loadingTitle}>PATRIA</Text>
-      <Text style={styles.loadingSub}>{phase}</Text>
+      <Text style={styles.loadingSub}>Loading…</Text>
     </View>
   );
 }
@@ -36,18 +37,16 @@ export default function App() {
     selectedId, appData, selectPerson,
     navHistory, navIndex, navigateBack, navigateForward,
   } = useAppStore();
+  const { setCenterOnId, bumpFitView, bumpCenterRoot } = useTreeStore();
 
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
-  const [loadPhase, setLoadPhase] = React.useState('Starting…');
   const bioPanelRef  = useRef<BottomSheet>(null);
   const searchSheetRef = useRef<BottomSheet>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        setLoadPhase('Reading CSV files…');
         const data: AppData = await loadAppData();
-        setLoadPhase(`Building tree (${Object.keys(data.personsMap).length} persons)…`);
         const layout = buildHierarchy(data);
         setAppData(data, layout);
         setStatus('ready');
@@ -66,8 +65,9 @@ export default function App() {
   const handleNavigate = useCallback((id: string) => {
     if (!appData?.personsMap[id]) return;
     selectPerson(id);
+    setCenterOnId(id);
     bioPanelRef.current?.snapToIndex(0);
-  }, [appData, selectPerson]);
+  }, [appData, selectPerson, setCenterOnId]);
 
   const handleBack = useCallback(() => {
     navigateBack();
@@ -81,7 +81,7 @@ export default function App() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
 
-      {status === 'loading' && <LoadingScreen phase={loadPhase} />}
+      {status === 'loading' && <LoadingScreen />}
       {status === 'error'   && <ErrorScreen message={dataError ?? 'Unknown error'} />}
 
       {status === 'ready' && (
@@ -89,13 +89,14 @@ export default function App() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>PATRIA</Text>
-            <Text style={styles.headerSub}>Biblical Family Tree</Text>
-            <TouchableOpacity
-              onPress={() => searchSheetRef.current?.snapToIndex(0)}
-              style={styles.searchBtn}
-              hitSlop={8}
-            >
-              <Text style={styles.searchBtnText}>🔍 Search</Text>
+            <TouchableOpacity onPress={bumpFitView} style={styles.hbtn} hitSlop={8}>
+              <Text style={styles.hbtnText}>Fit</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={bumpCenterRoot} style={styles.hbtn} hitSlop={8}>
+              <Text style={styles.hbtnText}>Center</Text>
+            </TouchableOpacity>
+            <TouchableOpacity onPress={() => searchSheetRef.current?.snapToIndex(0)} style={styles.hbtn} hitSlop={8}>
+              <Text style={styles.hbtnText}>Search</Text>
             </TouchableOpacity>
           </View>
 
@@ -133,28 +134,27 @@ export default function App() {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#1a0e08' },
+  root: { flex: 1, backgroundColor: '#2a2a2a' },
 
-  loading:      { flex: 1, backgroundColor: '#1a0e08', alignItems: 'center', justifyContent: 'center', gap: 16 },
-  loadingTitle: { color: '#c9a050', fontSize: 28, fontWeight: 'bold', letterSpacing: 4, marginTop: 12 },
-  loadingSub:   { color: '#a09080', fontSize: 13 },
+  loading:      { flex: 1, backgroundColor: '#2a2a2a', alignItems: 'center', justifyContent: 'center', gap: 16 },
+  loadingTitle: { color: '#c8a85a', fontSize: 28, fontWeight: 'bold', letterSpacing: 4, marginTop: 12 },
+  loadingSub:   { color: '#888', fontSize: 13 },
   errorTitle:   { color: '#e05050', fontSize: 18, fontWeight: 'bold' },
-  errorMsg:     { color: '#a09080', fontSize: 13, textAlign: 'center', paddingHorizontal: 24 },
+  errorMsg:     { color: '#888', fontSize: 13, textAlign: 'center', paddingHorizontal: 24 },
 
   header: {
-    backgroundColor: 'rgba(20,10,5,0.95)',
-    borderBottomWidth: 2,
-    borderBottomColor: 'rgba(201,160,80,0.5)',
+    backgroundColor: '#2a2a2a',
+    borderBottomWidth: 1,
+    borderBottomColor: '#505050',
     paddingVertical: 8,
     paddingHorizontal: 16,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
+    gap: 8,
   },
-  headerTitle: { color: '#c9a050', fontSize: 18, fontWeight: 'bold', letterSpacing: 3 },
-  headerSub:   { color: '#6a5a4a', fontSize: 11, letterSpacing: 1, flex: 1 },
-  searchBtn:   { backgroundColor: 'rgba(201,160,80,0.12)', borderWidth: 1, borderColor: 'rgba(201,160,80,0.4)', borderRadius: 6, paddingHorizontal: 10, paddingVertical: 5 },
-  searchBtnText: { color: '#c9a050', fontSize: 12, fontWeight: '700' },
+  headerTitle: { color: '#c8a85a', fontSize: 18, fontWeight: 'bold', letterSpacing: 3, flex: 1 },
+  hbtn:        { backgroundColor: '#3a3a3a', borderWidth: 1, borderColor: '#555', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 5 },
+  hbtnText:    { color: '#bbb', fontSize: 12 },
 
   treeArea: { flex: 1 },
 });

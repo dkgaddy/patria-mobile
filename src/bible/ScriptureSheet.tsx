@@ -57,13 +57,13 @@ export function ScriptureSheet({ sheetRef, currentRef, verseMap }: ScriptureShee
 }
 
 const styles = StyleSheet.create({
-  background:  { backgroundColor: '#1a0e08', borderWidth: 2, borderColor: 'rgba(201,160,80,0.5)', borderRadius: 16 },
-  indicator:   { backgroundColor: '#c9a050' },
-  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(201,160,80,0.3)' },
-  title:       { color: '#c9a050', fontWeight: '700', fontSize: 15, letterSpacing: 0.5 },
-  close:       { color: '#8a7060', fontSize: 18, padding: 4 },
+  background:  { backgroundColor: '#faf6ee', borderWidth: 1, borderColor: 'rgba(139,94,60,0.3)', borderRadius: 16 },
+  indicator:   { backgroundColor: '#8B5E3C' },
+  header:      { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(139,94,60,0.2)' },
+  title:       { color: '#8B5E3C', fontWeight: '700', fontSize: 15, letterSpacing: 0.5 },
+  close:       { color: '#7a5a3a', fontSize: 18, padding: 4 },
   body:        { paddingHorizontal: 20, paddingVertical: 12, paddingBottom: 40 },
-  verse:       { color: '#e8ddd0', fontSize: 15, lineHeight: 24, marginBottom: 8 },
-  verseNum:    { color: '#c9a050', fontWeight: '700', fontSize: 13 },
-  empty:       { color: '#8a7060', fontSize: 14, fontStyle: 'italic' },
+  verse:       { color: '#2a1208', fontSize: 15, lineHeight: 24, marginBottom: 8 },
+  verseNum:    { color: '#8B6914', fontWeight: '700', fontSize: 13 },
+  empty:       { color: '#7a5a3a', fontSize: 14, fontStyle: 'italic' },
 });

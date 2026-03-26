@@ -37,8 +37,8 @@ export function RelationshipRow({ rel, targetPerson, onNavigate, onRefPress }: R
 }
 
 const styles = StyleSheet.create({
-  row:  { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,0.05)' },
-  type: { fontSize: 12, color: '#8a7060' },
-  name: { fontSize: 13, color: '#c9a050', fontWeight: '600', textDecorationLine: 'underline' },
-  ref:  { fontSize: 11, color: '#7a6a50' },
+  row:  { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: 6, paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.08)' },
+  type: { fontSize: 12, color: '#7a5a3a' },
+  name: { fontSize: 13, color: '#8B5E3C', fontWeight: '600', textDecorationLine: 'underline' },
+  ref:  { fontSize: 11, color: '#9a7a5a' },
 });

@@ -23,7 +23,11 @@ interface TreeCanvasProps {
 export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   const { width: screenW, height: screenH } = useWindowDimensions();
   const { appData, treeLayout, selectPerson, selectedId } = useAppStore();
-  const { renderVersion, bumpRender, setTransform } = useTreeStore();
+  const {
+    renderVersion, bumpRender, setTransform,
+    centerOnId, setCenterOnId,
+    fitViewTrigger, centerRootTrigger,
+  } = useTreeStore();
 
   // Reanimated shared values for smooth gesture-driven transform
   const translateX = useSharedValue(screenW / 2);
@@ -151,12 +155,89 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeLayout, appData]);
 
+  // ── Center on root node ────────────────────────────────────────────────────
+  useEffect(() => {
+    if (!centerRootTrigger || !treeLayout || !appData) return;
+    runLayout(treeLayout.root, appData.spouseMap, appData.personsMap);
+    const rootX = (treeLayout.root as D3Node).x ?? 0;
+    const rootY = (treeLayout.root as D3Node).y ?? 0;
+    const s = 1.7;
+    const tx = screenW / 2 - rootX * s;
+    const ty = 100 - rootY * s;
+    translateX.value = tx; translateY.value = ty; scale.value = s;
+    savedTx.value = tx; savedTy.value = ty; savedScale.value = s;
+    txSnap.current = tx; tySnap.current = ty; scaleSnap.current = s;
+    bumpRender();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centerRootTrigger]);
+
+  // ── Fit entire tree in viewport ────────────────────────────────────────────
+  useEffect(() => {
+    if (!fitViewTrigger || !layout) return;
+    const PAD = 500;
+    const treeW = layout.svgWidth - 2 * PAD;
+    const treeH = layout.svgHeight - 2 * PAD;
+    const treeCX = layout.originX + layout.svgWidth / 2;
+    const treeCY = layout.originY + layout.svgHeight / 2;
+    const MARGIN = 40;
+    const s = Math.min(
+      Math.max(MIN_SCALE, Math.min(MAX_SCALE, (screenW - 2 * MARGIN) / treeW)),
+      Math.max(MIN_SCALE, Math.min(MAX_SCALE, (screenH - 2 * MARGIN) / treeH))
+    );
+    const tx = screenW / 2 - treeCX * s;
+    const ty = screenH / 2 - treeCY * s;
+    translateX.value = tx; translateY.value = ty; scale.value = s;
+    savedTx.value = tx; savedTy.value = ty; savedScale.value = s;
+    txSnap.current = tx; tySnap.current = ty; scaleSnap.current = s;
+    bumpRender();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fitViewTrigger]);
+
+  // Pending center target: set after tree expansion, applied after layout re-runs
+  const pendingCenterIdRef = useRef<string | null>(null);
+
+  // ── Step 1: expand tree path, queue centering for after layout re-run ──────
+  useEffect(() => {
+    if (!centerOnId || !treeLayout || !appData) return;
+    setCenterOnId(null);
+    const found = expandToId(treeLayout.root, centerOnId);
+    if (!found) { bumpRender(); return; }
+    pendingCenterIdRef.current = centerOnId;
+    bumpRender(); // triggers useTreeLayout re-run with expanded tree
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [centerOnId]);
+
+  // ── Step 2: once layout re-runs with expanded tree, apply centering ─────────
+  useEffect(() => {
+    const targetId = pendingCenterIdRef.current;
+    if (!targetId || !treeLayout) return;
+    pendingCenterIdRef.current = null;
+
+    // Find the node's updated position in the now-laid-out tree
+    let targetNode: D3Node | null = null;
+    treeLayout.root.each((d: D3Node) => {
+      if (d.data.id === targetId) targetNode = d;
+    });
+    if (!targetNode) return;
+
+    const nodeX = (targetNode as D3Node).x ?? 0;
+    const nodeY = (targetNode as D3Node).y ?? 0;
+    const s = 1.7;
+    const tx = screenW / 2 - nodeX * s;
+    const ty = screenH / 3 - nodeY * s;
+    translateX.value = tx; translateY.value = ty; scale.value = s;
+    savedTx.value = tx; savedTy.value = ty; savedScale.value = s;
+    txSnap.current = tx; tySnap.current = ty; scaleSnap.current = s;
+    bumpRender();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [layout]);
+
   if (!layout || !appData) return null;
 
   return (
     <View style={styles.container} pointerEvents="box-none">
       <GestureDetector gesture={composed}>
-        <Animated.View style={[styles.canvas, animatedStyle]} pointerEvents="box-none">
+        <Animated.View style={[styles.canvas, animatedStyle]}>
           <TreeRenderer
             layout={layout}
             appData={appData}
@@ -174,10 +255,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     overflow: 'hidden',
-    backgroundColor: '#1a1008',
+    backgroundColor: '#3a3a3a',
   },
   canvas: {
     position: 'absolute',
+    left: 0,
+    top: 0,
+    right: 0,
+    bottom: 0,
     transformOrigin: '0 0',
   },
 });

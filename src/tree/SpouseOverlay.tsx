@@ -27,8 +27,12 @@ function SpouseOverlayInner({
   const wifeX = husbandX + (NW / 2) + SPOUSE_GAP * (slotIndex + 1);
   const wifeY = husbandY;
 
-  // Connection line from husband card right-center to wife card left-center
-  const lineX1 = husbandX + (NW / 2) + SPOUSE_GAP * slotIndex + NW;
+  // Connection line: from right edge of card to the left, to left edge of this wife card
+  // For slotIndex=0: right edge of husband = husbandX + NW/2
+  // For slotIndex>0: right edge of previous wife = husbandX + NW/2 + SPOUSE_GAP*slotIndex + NW/2
+  const lineX1 = slotIndex === 0
+    ? husbandX + NW / 2
+    : husbandX + NW / 2 + SPOUSE_GAP * slotIndex + NW / 2;
   const lineY1 = husbandY + NH / 2;
   const lineX2 = wifeX - NW / 2;
   const lineY2 = wifeY + NH / 2;
