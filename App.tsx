@@ -11,12 +11,12 @@ import { BioPanel } from './src/bio/BioPanel';
 import { SearchSheet } from './src/search/SearchSheet';
 import type { AppData } from './src/data/types';
 
-function LoadingScreen() {
+function LoadingScreen({ phase }: { phase: string }) {
   return (
     <View style={styles.loading}>
       <ActivityIndicator size="large" color="#c9a050" />
       <Text style={styles.loadingTitle}>PATRIA</Text>
-      <Text style={styles.loadingSub}>Loading biblical genealogy…</Text>
+      <Text style={styles.loadingSub}>{phase}</Text>
     </View>
   );
 }
@@ -38,17 +38,17 @@ export default function App() {
   } = useAppStore();
 
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
+  const [loadPhase, setLoadPhase] = React.useState('Starting…');
   const bioPanelRef  = useRef<BottomSheet>(null);
   const searchSheetRef = useRef<BottomSheet>(null);
 
   useEffect(() => {
     (async () => {
       try {
-        console.log('[Patria] loadAppData start');
+        setLoadPhase('Reading CSV files…');
         const data: AppData = await loadAppData();
-        console.log('[Patria] loadAppData done, persons:', Object.keys(data.personsMap).length);
+        setLoadPhase(`Building tree (${Object.keys(data.personsMap).length} persons)…`);
         const layout = buildHierarchy(data);
-        console.log('[Patria] buildHierarchy done');
         setAppData(data, layout);
         setStatus('ready');
       } catch (e: any) {
@@ -81,7 +81,7 @@ export default function App() {
     <GestureHandlerRootView style={styles.root}>
       <StatusBar style="light" />
 
-      {status === 'loading' && <LoadingScreen />}
+      {status === 'loading' && <LoadingScreen phase={loadPhase} />}
       {status === 'error'   && <ErrorScreen message={dataError ?? 'Unknown error'} />}
 
       {status === 'ready' && (
