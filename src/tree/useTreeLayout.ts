@@ -30,9 +30,26 @@ export function useTreeLayout(
     // Run D3 layout (mutates x/y on each node)
     runLayout(root, appData.spouseMap, appData.personsMap);
 
-    // Viewport in tree coordinates (for culling)
-    const viewX = (-translateX) / scale - screenW / (2 * scale);
-    const viewY = (-translateY) / scale;
+    // Compute bounding box FIRST — needed for correct viewport math
+    let minX = 0, maxX = 0, minY = 0, maxY = 0;
+    root.each((d: D3Node) => {
+      const x = d.x ?? 0;
+      const y = d.y ?? 0;
+      if (x < minX) minX = x;
+      if (x + NW > maxX) maxX = x + NW;
+      if (y < minY) minY = y;
+      if (y + NH > maxY) maxY = y + NH;
+    });
+
+    const PAD = 500;
+    const originX = minX - PAD;
+    const originY = minY - PAD;
+
+    // Viewport in tree coordinates.
+    // The SVG is positioned at AV(originX, originY), so:
+    //   tree coord = AV coord − origin = (screen − translate) / scale − origin
+    const viewX = (-translateX) / scale - originX;
+    const viewY = (-translateY) / scale - originY;
     const viewW = screenW / scale;
     const viewH = screenH / scale;
 
@@ -59,26 +76,12 @@ export function useTreeLayout(
     );
     const spouseOverlays = allSpouseOverlays.filter(s => visibleIds.has(s.husbandId));
 
-    // Compute bounding box for SVG canvas
-    let minX = 0, maxX = 0, minY = 0, maxY = 0;
-    root.each((d: D3Node) => {
-      const x = d.x ?? 0;
-      const y = d.y ?? 0;
-      if (x < minX) minX = x;
-      if (x + NW > maxX) maxX = x + NW;
-      if (y < minY) minY = y;
-      if (y + NH > maxY) maxY = y + NH;
-    });
-
-    // Include spouse positions in bounding box
+    // Extend bounding box to include spouse positions
     allSpouseOverlays.forEach(s => {
       const rx = s.husbandX + NW / 2 + (NW + 24) * (s.slotIndex + 1) + NW / 2;
       if (rx > maxX) maxX = rx;
     });
 
-    const PAD = 500;
-    const originX = minX - PAD;
-    const originY = minY - PAD;
     const svgWidth  = maxX - minX + PAD * 2;
     const svgHeight = maxY - minY + PAD * 2;
 

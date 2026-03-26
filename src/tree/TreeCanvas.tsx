@@ -129,18 +129,41 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   useEffect(() => {
     if (!treeLayout || !appData) return;
     runLayout(treeLayout.root, appData.spouseMap, appData.personsMap);
-    const root = treeLayout.root as D3Node;
-    // Root is at (0,0); center it on screen at scale 1.7
-    translateX.value = screenW / 2;
-    translateY.value = 80;
-    scale.value      = 1.7;
-    savedTx.value    = screenW / 2;
-    savedTy.value    = 80;
-    savedScale.value = 1.7;
-    txSnap.current    = screenW / 2;
-    tySnap.current    = 80;
-    scaleSnap.current = 1.7;
-    setTransform(screenW / 2, 80, 1.7);
+
+    // Compute the SVG origin offset (same logic as useTreeLayout)
+    const PAD = 500;
+    let minX = 0, minY = 0;
+    treeLayout.root.each((d: D3Node) => {
+      const x = d.x ?? 0;
+      const y = d.y ?? 0;
+      if (x < minX) minX = x;
+      if (y < minY) minY = y;
+    });
+    const originX = minX - PAD;
+    const originY = minY - PAD;
+
+    // Root's D3 position
+    const rootX = (treeLayout.root as D3Node).x ?? 0;
+    const rootY = (treeLayout.root as D3Node).y ?? 0;
+
+    // Root is at AV coord (rootX + originX, rootY + originY) because the SVG
+    // is absolutely positioned at left:originX, top:originY inside the AV.
+    // For root to appear at (screenW/2, 100) with scale 1.7:
+    //   screen = AV * scale + translate  →  translate = screen - AV * scale
+    const s = 1.7;
+    const initTx = screenW / 2 - (rootX + originX) * s;
+    const initTy = 100 - (rootY + originY) * s;
+
+    translateX.value = initTx;
+    translateY.value = initTy;
+    scale.value      = s;
+    savedTx.value    = initTx;
+    savedTy.value    = initTy;
+    savedScale.value = s;
+    txSnap.current    = initTx;
+    tySnap.current    = initTy;
+    scaleSnap.current = s;
+    setTransform(initTx, initTy, s);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeLayout, appData]);
 
