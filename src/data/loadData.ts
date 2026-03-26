@@ -1,6 +1,6 @@
 import Papa from 'papaparse';
 import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
+import * as FileSystem from 'expo-file-system/legacy';
 import type { PersonRecord, LabelRecord, RelRecord, AppData } from './types';
 
 // Bundled data assets
