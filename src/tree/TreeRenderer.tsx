@@ -6,6 +6,14 @@ import { elbowPath, NH } from '../data/hierarchy';
 import type { TreeLayoutResult } from './useTreeLayout';
 import type { AppData } from '../data/types';
 
+// The SVG is positioned at AV(originX, originY) via absolute style.
+// Without a G offset, nodes at negative tree-x coords land at negative SVG coords
+// and get clipped by the SVG element. The G translate(-originX, -originY) shifts
+// all nodes into positive SVG-coordinate space, while the SVG's absolute position
+// cancels the shift so AV-coords equal tree-coords (AV(tx, ty) = tree(tx, ty)).
+// This means the pan/zoom transform in TreeCanvas can use the simple formulas:
+//   screen = (tx * scale + translateX, ty * scale + translateY)
+
 interface TreeRendererProps {
   layout: TreeLayoutResult;
   appData: AppData;
@@ -29,6 +37,8 @@ export function TreeRenderer({
       height={svgHeight}
       style={{ position: 'absolute', left: originX, top: originY }}
     >
+      {/* Shift all content so tree-coords map to positive SVG coords */}
+      <G transform={`translate(${-originX}, ${-originY})`}>
       <G>
         {/* Connector lines */}
         {links.map(link => (
@@ -74,6 +84,7 @@ export function TreeRenderer({
             clipId={`clip-${node.id}`}
           />
         ))}
+      </G>
       </G>
     </Svg>
   );

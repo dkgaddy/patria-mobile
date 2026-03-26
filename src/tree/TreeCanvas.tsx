@@ -27,17 +27,17 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
 
   // Reanimated shared values for smooth gesture-driven transform
   const translateX = useSharedValue(screenW / 2);
-  const translateY = useSharedValue(80);
+  const translateY = useSharedValue(100);
   const scale      = useSharedValue(1.7);
 
   // Saved values at gesture start
   const savedTx    = useSharedValue(screenW / 2);
-  const savedTy    = useSharedValue(80);
+  const savedTy    = useSharedValue(100);
   const savedScale = useSharedValue(1.7);
 
   // React state snapshot for culling (updated via runOnJS)
   const txSnap = useRef(screenW / 2);
-  const tySnap = useRef(80);
+  const tySnap = useRef(100);
   const scaleSnap = useRef(1.7);
 
   const updateSnapshot = useCallback((tx: number, ty: number, s: number) => {
@@ -125,34 +125,18 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     scaleSnap.current,
   );
 
-  // Center on YHVH_1 on first load
+  // Center on YHVH_1 on first load.
+  // With the G-transform in TreeRenderer, AV-coords == tree-coords, so:
+  //   screen = tree * scale + translate  →  translate = screen - tree * scale
   useEffect(() => {
     if (!treeLayout || !appData) return;
     runLayout(treeLayout.root, appData.spouseMap, appData.personsMap);
 
-    // Compute the SVG origin offset (same logic as useTreeLayout)
-    const PAD = 500;
-    let minX = 0, minY = 0;
-    treeLayout.root.each((d: D3Node) => {
-      const x = d.x ?? 0;
-      const y = d.y ?? 0;
-      if (x < minX) minX = x;
-      if (y < minY) minY = y;
-    });
-    const originX = minX - PAD;
-    const originY = minY - PAD;
-
-    // Root's D3 position
     const rootX = (treeLayout.root as D3Node).x ?? 0;
     const rootY = (treeLayout.root as D3Node).y ?? 0;
-
-    // Root is at AV coord (rootX + originX, rootY + originY) because the SVG
-    // is absolutely positioned at left:originX, top:originY inside the AV.
-    // For root to appear at (screenW/2, 100) with scale 1.7:
-    //   screen = AV * scale + translate  →  translate = screen - AV * scale
     const s = 1.7;
-    const initTx = screenW / 2 - (rootX + originX) * s;
-    const initTy = 100 - (rootY + originY) * s;
+    const initTx = screenW / 2 - rootX * s;
+    const initTy = 100 - rootY * s;
 
     translateX.value = initTx;
     translateY.value = initTy;
@@ -163,7 +147,7 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     txSnap.current    = initTx;
     tySnap.current    = initTy;
     scaleSnap.current = s;
-    setTransform(initTx, initTy, s);
+    bumpRender();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [treeLayout, appData]);
 

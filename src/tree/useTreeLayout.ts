@@ -46,10 +46,10 @@ export function useTreeLayout(
     const originY = minY - PAD;
 
     // Viewport in tree coordinates.
-    // The SVG is positioned at AV(originX, originY), so:
-    //   tree coord = AV coord − origin = (screen − translate) / scale − origin
-    const viewX = (-translateX) / scale - originX;
-    const viewY = (-translateY) / scale - originY;
+    // With the G-transform in TreeRenderer, AV-coords == tree-coords, so:
+    //   screen = tree * scale + translate  →  tree = (screen - translate) / scale
+    const viewX = (-translateX) / scale;
+    const viewY = (-translateY) / scale;
     const viewW = screenW / scale;
     const viewH = screenH / scale;
 
