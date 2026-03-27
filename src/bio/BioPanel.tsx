@@ -28,13 +28,19 @@ export function BioPanel({
   navIndex, navHistory, onNavigate, onBack, onForward,
 }: BioPanelProps) {
   const [labelsExpanded, setLabelsExpanded] = useState(false);
-  const scriptureSheetRef = useRef<BottomSheet>(null);
+  const [photoError, setPhotoError] = useState(false);
   const [currentRef, setCurrentRef] = useState<ScriptureRef | null>(null);
 
   const handleRefPress = useCallback((ref: ScriptureRef) => {
     setCurrentRef(ref);
-    scriptureSheetRef.current?.snapToIndex(0);
   }, []);
+
+  // Reset error flag each time the selected person changes
+  const prevPersonIdRef = useRef<string | null>(null);
+  if (prevPersonIdRef.current !== personId) {
+    prevPersonIdRef.current = personId;
+    if (photoError) setPhotoError(false);
+  }
 
   const person = personId ? appData.personsMap[personId] : null;
 
@@ -76,27 +82,33 @@ export function BioPanel({
               {navHistory.length > 1 && (
                 <View style={styles.navRow}>
                   <TouchableOpacity onPress={onBack} disabled={!canBack} style={[styles.navBtn, !canBack && styles.navBtnDisabled]}>
-                    <Text style={styles.navBtnText}>◀ Back</Text>
+                    <Text style={styles.navBtnText}>◀</Text>
                   </TouchableOpacity>
                   <TouchableOpacity onPress={onForward} disabled={!canForward} style={[styles.navBtn, !canForward && styles.navBtnDisabled]}>
-                    <Text style={styles.navBtnText}>Forward ▶</Text>
+                    <Text style={styles.navBtnText}>▶</Text>
                   </TouchableOpacity>
                 </View>
               )}
-
-              {/* Photo */}
-              <Image
-                source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
-                style={styles.photo}
-                contentFit="cover"
-                transition={200}
-              />
 
               {/* Name & metadata */}
               <View style={styles.nameBlock}>
                 <Text style={styles.name}>{displayName}</Text>
                 <Text style={styles.meta}>{sex}{tribe}</Text>
               </View>
+
+              {/* Photo — circular, centered; hidden only if the image 404s */}
+              {!photoError && (
+                <View style={styles.photoCircleWrap}>
+                  <Image
+                    key={personId}
+                    source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
+                    style={styles.photoCircle}
+                    contentFit="cover"
+                    transition={200}
+                    onError={() => setPhotoError(true)}
+                  />
+                </View>
+              )}
 
               {/* Unique attribute / notes */}
               {(person.unique_attribute || person.person_notes) ? (
@@ -152,9 +164,9 @@ export function BioPanel({
 
       {/* Scripture verse sheet (stacked above bio sheet) */}
       <ScriptureSheet
-        sheetRef={scriptureSheetRef}
         currentRef={currentRef}
         verseMap={appData.verseMap}
+        onClose={() => setCurrentRef(null)}
       />
     </>
   );
@@ -176,7 +188,8 @@ const styles = StyleSheet.create({
   navBtnDisabled:   { opacity: 0.3 },
   navBtnText:       { color: '#8B5E3C', fontSize: 12, fontWeight: '700' },
 
-  photo:            { width: '100%', height: 220, backgroundColor: '#d8cfc0' },
+  photoCircleWrap:  { alignSelf: 'center', marginVertical: 14, width: '75%', aspectRatio: 1, borderRadius: 999, overflow: 'hidden', borderWidth: 3, borderColor: '#8B5E3C' },
+  photoCircle:      { width: '100%', height: '100%' },
 
   nameBlock:        { paddingHorizontal: 16, paddingTop: 14, paddingBottom: 4 },
   name:             { color: '#2a1208', fontSize: 22, fontWeight: '700', fontStyle: 'italic' },

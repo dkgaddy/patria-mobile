@@ -35,9 +35,9 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   const scale      = useSharedValue(1.7);
 
   // Saved values at gesture start
-  const savedTx    = useSharedValue(screenW / 2);
-  const savedTy    = useSharedValue(100);
-  const savedScale = useSharedValue(1.7);
+  const savedTx     = useSharedValue(screenW / 2);
+  const savedTy     = useSharedValue(100);
+  const savedScale  = useSharedValue(1.7);
 
   // React state snapshot for culling (updated via runOnJS)
   const txSnap = useRef(screenW / 2);
@@ -54,6 +54,7 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
 
   // ── Pan gesture ────────────────────────────────────────────────────────────
   const panGesture = Gesture.Pan()
+    .maxPointers(1)
     .onBegin(() => {
       savedTx.value    = translateX.value;
       savedTy.value    = translateY.value;
@@ -78,9 +79,11 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     })
     .onUpdate((e) => {
       const newScale = Math.min(MAX_SCALE, Math.max(MIN_SCALE, savedScale.value * e.scale));
-      // Zoom toward focal point
-      translateX.value = e.focalX + (savedTx.value - e.focalX) * (newScale / savedScale.value);
-      translateY.value = e.focalY + (savedTy.value - e.focalY) * (newScale / savedScale.value);
+      // Zoom anchored to screen center — what's at the center stays at the center
+      const cx = screenW / 2;
+      const cy = screenH / 2;
+      translateX.value = cx + (savedTx.value - cx) * (newScale / savedScale.value);
+      translateY.value = cy + (savedTy.value - cy) * (newScale / savedScale.value);
       scale.value      = newScale;
     })
     .onEnd(() => {
@@ -180,11 +183,20 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     const treeCX = (layout.treeMinX + layout.treeMaxX) / 2;
     const treeCY = (layout.treeMinY + layout.treeMaxY) / 2;
     const MARGIN = 40;
-    const s = Math.min(
-      Math.max(MIN_SCALE, Math.min(MAX_SCALE, (screenW - 2 * MARGIN) / treeW)),
-      Math.max(MIN_SCALE, Math.min(MAX_SCALE, (screenH - 2 * MARGIN) / treeH))
+    // Minimum fit scale prevents the viewport (in tree coords) from becoming
+    // so large that the SVG exceeds react-native-svg's safe rendering limit.
+    const MIN_FIT_SCALE = 0.3;
+    const rawS = Math.min(
+      (screenW - 2 * MARGIN) / treeW,
+      (screenH - 2 * MARGIN) / treeH
     );
-    const tx = screenW / 2 - treeCX * s;
+    const s = Math.min(MAX_SCALE, Math.max(MIN_FIT_SCALE, rawS));
+    // When clamped to MIN_FIT_SCALE the full tree won't fit, so center on x=0
+    // (the root/chain column after D3 normalization) so the navigated path stays
+    // visible rather than centering on the tree's geometric midpoint which may
+    // be far from the chain.
+    const cx = rawS < MIN_FIT_SCALE ? 0 : treeCX;
+    const tx = screenW / 2 - cx * s;
     const ty = screenH / 2 - treeCY * s;
     translateX.value = tx; translateY.value = ty; scale.value = s;
     savedTx.value = tx; savedTy.value = ty; savedScale.value = s;
@@ -200,7 +212,7 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   useEffect(() => {
     if (!centerOnId || !treeLayout || !appData) return;
     setCenterOnId(null);
-    const found = expandToId(treeLayout.root, centerOnId);
+    const found = expandToId(treeLayout.root, centerOnId, appData.childrenMap);
     if (!found) { bumpRender(); return; }
     pendingCenterIdRef.current = centerOnId;
     bumpRender(); // triggers useTreeLayout re-run with expanded tree

@@ -105,28 +105,61 @@ export function toggleNode(node: D3Node): void {
 }
 
 // ── Expand path from root to a target id ────────────────────────────────────
+// Matches web app expandAndFocus: collapses ALL nodes first (clean slate),
+// then expands only the direct chain from root → target. Siblings of chain
+// nodes are left collapsed, so the tree stays compact.
 
-export function expandToId(root: D3Node, targetId: string): D3Node | null {
-  let found: D3Node | null = null;
+export function expandToId(
+  root: D3Node,
+  targetId: string,
+  childrenMap: Record<string, string[]>,
+): D3Node | null {
+  // Build parent map from childrenMap
+  const parentOf: Record<string, string> = {};
+  Object.entries(childrenMap).forEach(([pid, kids]) => {
+    kids.forEach(kid => { parentOf[kid] = pid; });
+  });
 
-  function expand(node: D3Node): boolean {
-    if (node.data.id === targetId) { found = node; return true; }
-    const kids: D3Node[] = ((node as any).children || (node as any)._children || []) as D3Node[];
-    for (const child of kids) {
-      if (expand(child)) {
-        // Ensure this node is expanded
-        if (!(node as any).children && (node as any)._children) {
-          (node as any).children  = (node as any)._children;
-          (node as any)._children = null;
-        }
-        return true;
-      }
-    }
-    return false;
+  // Build chain from root to target (root-first)
+  const chain: string[] = [];
+  let cur: string | undefined = targetId;
+  while (cur) {
+    chain.push(cur);
+    cur = parentOf[cur];
   }
+  chain.reverse();
 
-  expand(root);
-  return found;
+  // If chain doesn't lead back to the root node, target isn't in this tree
+  if (chain[0] !== root.data.id) return null;
+
+  // Step 1: Collapse everything — prevents prior navigations from leaking
+  function collapseAll(node: D3Node) {
+    if ((node as any).children) {
+      (node as any)._children = (node as any).children;
+      (node as any).children  = null;
+    }
+    ((node as any)._children || []).forEach(collapseAll);
+  }
+  collapseAll(root);
+
+  // Step 2: Build nodeMap — all nodes are now reachable via _children chains
+  const nodeMap: Record<string, D3Node> = {};
+  function mapAll(node: D3Node) {
+    nodeMap[node.data.id] = node;
+    ((node as any)._children || []).forEach(mapAll);
+  }
+  mapAll(root);
+
+  // Step 3: Expand only chain nodes — path to target + target's own children
+  chain.forEach(id => {
+    const node = nodeMap[id];
+    if (node && (node as any)._children) {
+      (node as any).children  = (node as any)._children;
+      (node as any)._children = null;
+    }
+  });
+
+  return nodeMap[targetId] ?? null;
 }
 
 // ── Run D3 tree layout ───────────────────────────────────────────────────────

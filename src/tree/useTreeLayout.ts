@@ -77,12 +77,16 @@ export function useTreeLayout(
       if (rx > treeMaxX) treeMaxX = rx;
     });
 
-    // SVG sized to viewport + margin only — prevents react-native-svg from
-    // receiving impossibly large dimensions when a big subtree is expanded
-    const originX = viewX - MARGIN;
-    const originY = viewY - MARGIN;
-    const svgWidth  = viewW + MARGIN * 2;
-    const svgHeight = viewH + MARGIN * 2;
+    // SVG sized to intersection of (viewport + margin) and (tree bounds + margin)
+    // This prevents react-native-svg from receiving huge dimensions at small scales (e.g. Fit view)
+    const originX  = Math.max(treeMinX - MARGIN, viewX - MARGIN);
+    const originY  = Math.max(treeMinY - MARGIN, viewY - MARGIN);
+    const svgRight  = Math.min(treeMaxX + MARGIN, viewX + viewW + MARGIN);
+    const svgBottom = Math.min(treeMaxY + MARGIN, viewY + viewH + MARGIN);
+    // Hard cap to prevent react-native-svg from allocating an enormous bitmap
+    const MAX_SVG_DIM = 4096;
+    const svgWidth  = Math.max(1, Math.min(MAX_SVG_DIM, svgRight  - originX));
+    const svgHeight = Math.max(1, Math.min(MAX_SVG_DIM, svgBottom - originY));
 
     return { nodes, links, spouseOverlays, svgWidth, svgHeight, originX, originY, treeMinX, treeMaxX, treeMinY, treeMaxY };
   // eslint-disable-next-line react-hooks/exhaustive-deps

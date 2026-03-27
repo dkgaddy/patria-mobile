@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef } from 'react';
+import { useFonts, Cinzel_700Bold } from '@expo-google-fonts/cinzel';
 import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -32,12 +33,22 @@ function ErrorScreen({ message }: { message: string }) {
 }
 
 export default function App() {
+  const [fontsLoaded] = useFonts({ Cinzel_700Bold });
+
   const {
     dataError, setAppData, setDataError,
     selectedId, appData, selectPerson,
     navHistory, navIndex, navigateBack, navigateForward,
   } = useAppStore();
   const { setCenterOnId, bumpFitView, bumpCenterRoot } = useTreeStore();
+
+  const handleCenter = useCallback(() => {
+    if (selectedId && appData?.personsMap[selectedId]) {
+      setCenterOnId(selectedId);
+    } else {
+      bumpCenterRoot();
+    }
+  }, [selectedId, appData, setCenterOnId, bumpCenterRoot]);
 
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
   const [searchOpen, setSearchOpen] = React.useState(false);
@@ -92,7 +103,7 @@ export default function App() {
             <TouchableOpacity onPress={bumpFitView} style={styles.hbtn} hitSlop={8}>
               <Text style={styles.hbtnText}>Fit</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={bumpCenterRoot} style={styles.hbtn} hitSlop={8}>
+            <TouchableOpacity onPress={handleCenter} style={styles.hbtn} hitSlop={8}>
               <Text style={styles.hbtnText}>Center</Text>
             </TouchableOpacity>
             <TouchableOpacity onPress={() => setSearchOpen(true)} style={styles.hbtn} hitSlop={8}>
@@ -147,15 +158,15 @@ const styles = StyleSheet.create({
     backgroundColor: '#2a2a2a',
     borderBottomWidth: 1,
     borderBottomColor: '#505050',
-    paddingVertical: 8,
-    paddingHorizontal: 16,
+    paddingVertical: 12,
+    paddingHorizontal: 18,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
+    gap: 10,
   },
-  headerTitle: { color: '#c8a85a', fontSize: 18, fontWeight: 'bold', letterSpacing: 3, flex: 1 },
-  hbtn:        { backgroundColor: '#3a3a3a', borderWidth: 1, borderColor: '#555', borderRadius: 4, paddingHorizontal: 10, paddingVertical: 5 },
-  hbtnText:    { color: '#bbb', fontSize: 12 },
+  headerTitle: { color: '#c8a85a', fontSize: 24, fontFamily: 'Cinzel_700Bold', letterSpacing: 3, flex: 1 },
+  hbtn:        { backgroundColor: '#3a3a3a', borderWidth: 1, borderColor: '#555', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 8 },
+  hbtnText:    { color: '#bbb', fontSize: 15 },
 
   treeArea: { flex: 1 },
 });
