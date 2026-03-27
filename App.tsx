@@ -40,8 +40,8 @@ export default function App() {
   const { setCenterOnId, bumpFitView, bumpCenterRoot } = useTreeStore();
 
   const [status, setStatus] = React.useState<'loading' | 'ready' | 'error'>('loading');
-  const bioPanelRef  = useRef<BottomSheet>(null);
-  const searchSheetRef = useRef<BottomSheet>(null);
+  const [searchOpen, setSearchOpen] = React.useState(false);
+  const bioPanelRef = useRef<BottomSheet>(null);
 
   useEffect(() => {
     (async () => {
@@ -95,7 +95,7 @@ export default function App() {
             <TouchableOpacity onPress={bumpCenterRoot} style={styles.hbtn} hitSlop={8}>
               <Text style={styles.hbtnText}>Center</Text>
             </TouchableOpacity>
-            <TouchableOpacity onPress={() => searchSheetRef.current?.snapToIndex(0)} style={styles.hbtn} hitSlop={8}>
+            <TouchableOpacity onPress={() => setSearchOpen(true)} style={styles.hbtn} hitSlop={8}>
               <Text style={styles.hbtnText}>Search</Text>
             </TouchableOpacity>
           </View>
@@ -105,10 +105,11 @@ export default function App() {
             <TreeCanvas onPersonSelected={handlePersonSelected} />
           </View>
 
-          {/* Search sheet */}
+          {/* Search modal */}
           {appData && (
             <SearchSheet
-              sheetRef={searchSheetRef}
+              isOpen={searchOpen}
+              onClose={() => setSearchOpen(false)}
               appData={appData}
               onSelectPerson={handleNavigate}
             />
