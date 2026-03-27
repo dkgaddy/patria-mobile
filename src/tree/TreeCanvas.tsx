@@ -49,7 +49,8 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     tySnap.current    = ty;
     scaleSnap.current = s;
     setTransform(tx, ty, s);
-  }, [setTransform]);
+    bumpRender(); // resize the viewport-based SVG for the new scale/position
+  }, [setTransform, bumpRender]);
 
   // ── Pan gesture ────────────────────────────────────────────────────────────
   const panGesture = Gesture.Pan()
@@ -174,11 +175,10 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
   // ── Fit entire tree in viewport ────────────────────────────────────────────
   useEffect(() => {
     if (!fitViewTrigger || !layout) return;
-    const PAD = 500;
-    const treeW = layout.svgWidth - 2 * PAD;
-    const treeH = layout.svgHeight - 2 * PAD;
-    const treeCX = layout.originX + layout.svgWidth / 2;
-    const treeCY = layout.originY + layout.svgHeight / 2;
+    const treeW  = layout.treeMaxX - layout.treeMinX;
+    const treeH  = layout.treeMaxY - layout.treeMinY;
+    const treeCX = (layout.treeMinX + layout.treeMaxX) / 2;
+    const treeCY = (layout.treeMinY + layout.treeMaxY) / 2;
     const MARGIN = 40;
     const s = Math.min(
       Math.max(MIN_SCALE, Math.min(MAX_SCALE, (screenW - 2 * MARGIN) / treeW)),

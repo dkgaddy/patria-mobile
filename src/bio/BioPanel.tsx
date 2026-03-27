@@ -62,91 +62,92 @@ export function BioPanel({
         backgroundStyle={styles.background}
         handleIndicatorStyle={styles.indicator}
       >
-        {!person ? (
-          <View style={styles.placeholder}>
-            <Text style={styles.placeholderIcon}>📜</Text>
-            <Text style={styles.placeholderTitle}>PATRIA</Text>
-            <Text style={styles.placeholderSub}>Biblical Family Tree</Text>
-            <Text style={styles.placeholderHint}>Tap any person in the tree to view their biography.</Text>
-          </View>
-        ) : (
-          <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
-
-            {/* Nav history buttons */}
-            {navHistory.length > 1 && (
-              <View style={styles.navRow}>
-                <TouchableOpacity onPress={onBack} disabled={!canBack} style={[styles.navBtn, !canBack && styles.navBtnDisabled]}>
-                  <Text style={styles.navBtnText}>◀ Back</Text>
-                </TouchableOpacity>
-                <TouchableOpacity onPress={onForward} disabled={!canForward} style={[styles.navBtn, !canForward && styles.navBtnDisabled]}>
-                  <Text style={styles.navBtnText}>Forward ▶</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-
-            {/* Photo */}
-            <Image
-              source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
-              style={styles.photo}
-              contentFit="cover"
-              transition={200}
-            />
-
-            {/* Name & metadata */}
-            <View style={styles.nameBlock}>
-              <Text style={styles.name}>{displayName}</Text>
-              <Text style={styles.meta}>{sex}{tribe}</Text>
+        <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
+          {!person ? (
+            <View style={styles.placeholder}>
+              <Text style={styles.placeholderIcon}>📜</Text>
+              <Text style={styles.placeholderTitle}>PATRIA</Text>
+              <Text style={styles.placeholderSub}>Biblical Family Tree</Text>
+              <Text style={styles.placeholderHint}>Tap any person in the tree to view their biography.</Text>
             </View>
-
-            {/* Unique attribute / notes */}
-            {(person.unique_attribute || person.person_notes) ? (
-              <View style={styles.notesBlock}>
-                <ScriptureText
-                  text={person.unique_attribute || person.person_notes}
-                  style={styles.notes}
-                  onRefPress={handleRefPress}
-                />
-              </View>
-            ) : null}
-
-            {/* Names & Titles */}
-            {labels.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Names &amp; Titles</Text>
-                <View style={styles.sectionRule} />
-                {visibleLabels.map((l, i) => (
-                  <LabelCard key={i} label={l} onRefPress={handleRefPress} />
-                ))}
-                {labels.length > 3 && (
-                  <TouchableOpacity onPress={() => setLabelsExpanded(e => !e)} style={styles.showMoreBtn}>
-                    <Text style={styles.showMoreText}>
-                      {labelsExpanded ? 'Show less ▲' : `Show ${labels.length - 3} more ▼`}
-                    </Text>
+          ) : (
+            <>
+              {/* Nav history buttons */}
+              {navHistory.length > 1 && (
+                <View style={styles.navRow}>
+                  <TouchableOpacity onPress={onBack} disabled={!canBack} style={[styles.navBtn, !canBack && styles.navBtnDisabled]}>
+                    <Text style={styles.navBtnText}>◀ Back</Text>
                   </TouchableOpacity>
-                )}
-              </View>
-            )}
+                  <TouchableOpacity onPress={onForward} disabled={!canForward} style={[styles.navBtn, !canForward && styles.navBtnDisabled]}>
+                    <Text style={styles.navBtnText}>Forward ▶</Text>
+                  </TouchableOpacity>
+                </View>
+              )}
 
-            {/* Relationships */}
-            {rels.length > 0 && (
-              <View style={styles.section}>
-                <Text style={styles.sectionTitle}>Relationships</Text>
-                <View style={styles.sectionRule} />
-                {rels.map((r, i) => (
-                  <RelationshipRow
-                    key={i}
-                    rel={r}
-                    targetPerson={appData.personsMap[r.person_id_2]}
-                    onNavigate={onNavigate}
+              {/* Photo */}
+              <Image
+                source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
+                style={styles.photo}
+                contentFit="cover"
+                transition={200}
+              />
+
+              {/* Name & metadata */}
+              <View style={styles.nameBlock}>
+                <Text style={styles.name}>{displayName}</Text>
+                <Text style={styles.meta}>{sex}{tribe}</Text>
+              </View>
+
+              {/* Unique attribute / notes */}
+              {(person.unique_attribute || person.person_notes) ? (
+                <View style={styles.notesBlock}>
+                  <ScriptureText
+                    text={person.unique_attribute || person.person_notes}
+                    style={styles.notes}
                     onRefPress={handleRefPress}
                   />
-                ))}
-              </View>
-            )}
+                </View>
+              ) : null}
 
-            <View style={{ height: 40 }} />
-          </BottomSheetScrollView>
-        )}
+              {/* Names & Titles */}
+              {labels.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Names &amp; Titles</Text>
+                  <View style={styles.sectionRule} />
+                  {visibleLabels.map((l, i) => (
+                    <LabelCard key={i} label={l} onRefPress={handleRefPress} />
+                  ))}
+                  {labels.length > 3 && (
+                    <TouchableOpacity onPress={() => setLabelsExpanded(e => !e)} style={styles.showMoreBtn}>
+                      <Text style={styles.showMoreText}>
+                        {labelsExpanded ? 'Show less ▲' : `Show ${labels.length - 3} more ▼`}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              )}
+
+              {/* Relationships */}
+              {rels.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Relationships</Text>
+                  <View style={styles.sectionRule} />
+                  {rels.map((r, i) => (
+                    <RelationshipRow
+                      key={i}
+                      rel={r}
+                      targetPerson={appData.personsMap[r.person_id_2]}
+                      onNavigate={onNavigate}
+                      onRefPress={handleRefPress}
+                    />
+                  ))}
+                </View>
+              )}
+
+              <View style={{ height: 40 }} />
+            </>
+          )}
+        </BottomSheetScrollView>
       </BottomSheet>
 
       {/* Scripture verse sheet (stacked above bio sheet) */}

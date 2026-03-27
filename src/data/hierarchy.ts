@@ -141,6 +141,16 @@ export function runLayout(root: D3Node, spouseMap: Record<string, string[]>, per
       return base + leftOverlayCount * 0.6;
     });
   layout(root as any);
+
+  // Normalize: pin root to x=0 so the viewport stays stable after expand/collapse.
+  // D3 shifts the root's x when the tree grows asymmetrically, which would move
+  // all nodes out of the current viewport and make the tree appear to disappear.
+  const rootX = (root as D3Node).x ?? 0;
+  if (rootX !== 0) {
+    root.each((d: D3Node) => {
+      if (d.x !== undefined) (d as any).x -= rootX;
+    });
+  }
 }
 
 // ── Compute elbow path between two nodes ────────────────────────────────────

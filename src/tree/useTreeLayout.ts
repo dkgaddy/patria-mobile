@@ -8,10 +8,16 @@ export interface TreeLayoutResult {
   nodes: PositionedNode[];
   links: PositionedLink[];
   spouseOverlays: SpouseInfo[];
+  // SVG rendering area — viewport-sized to avoid huge SVG crashes
   svgWidth: number;
   svgHeight: number;
-  originX: number; // left edge of bounding box (may be negative)
+  originX: number;
   originY: number;
+  // Full tree bounding box — used by Fit (separate from SVG size)
+  treeMinX: number;
+  treeMaxX: number;
+  treeMinY: number;
+  treeMaxY: number;
 }
 
 export function useTreeLayout(
@@ -30,42 +36,22 @@ export function useTreeLayout(
     // Run D3 layout (mutates x/y on each node)
     runLayout(root, appData.spouseMap, appData.personsMap);
 
-    // Compute bounding box FIRST — needed for correct viewport math
-    let minX = 0, maxX = 0, minY = 0, maxY = 0;
-    root.each((d: D3Node) => {
-      const x = d.x ?? 0;
-      const y = d.y ?? 0;
-      if (x < minX) minX = x;
-      if (x + NW > maxX) maxX = x + NW;
-      if (y < minY) minY = y;
-      if (y + NH > maxY) maxY = y + NH;
-    });
-
-    const PAD = 500;
-    const originX = minX - PAD;
-    const originY = minY - PAD;
-
-    // Viewport in tree coordinates.
-    // With the G-transform in TreeRenderer, AV-coords == tree-coords, so:
-    //   screen = tree * scale + translate  →  tree = (screen - translate) / scale
+    // Viewport in tree coordinates
     const viewX = (-translateX) / scale;
     const viewY = (-translateY) / scale;
     const viewW = screenW / scale;
     const viewH = screenH / scale;
 
-    // Get positioned nodes (with culling)
-    const rawNodes = getPositionedNodes(root, viewX, viewY, viewW, viewH, 400);
-
-    // Attach person records
+    // Cull nodes to viewport + margin
+    const MARGIN = 400;
+    const rawNodes = getPositionedNodes(root, viewX, viewY, viewW, viewH, MARGIN);
     const nodes: PositionedNode[] = rawNodes.map(n => ({
       ...n,
       person: appData.personsMap[n.id] ?? {} as any,
     }));
 
-    // Links (all visible — we only draw between visible nodes in practice)
     const links = getLinks(root);
 
-    // Spouse overlays for visible nodes
     const visibleIds = new Set(nodes.map(n => n.id));
     const allSpouseOverlays = getSpouseOverlays(
       root,
@@ -76,16 +62,29 @@ export function useTreeLayout(
     );
     const spouseOverlays = allSpouseOverlays.filter(s => visibleIds.has(s.husbandId));
 
-    // Extend bounding box to include spouse positions
+    // Full tree bounding box — needed by Fit, NOT used for SVG dimensions
+    let treeMinX = 0, treeMaxX = 0, treeMinY = 0, treeMaxY = 0;
+    root.each((d: D3Node) => {
+      const x = d.x ?? 0;
+      const y = d.y ?? 0;
+      if (x < treeMinX) treeMinX = x;
+      if (x + NW > treeMaxX) treeMaxX = x + NW;
+      if (y < treeMinY) treeMinY = y;
+      if (y + NH > treeMaxY) treeMaxY = y + NH;
+    });
     allSpouseOverlays.forEach(s => {
       const rx = s.husbandX + NW / 2 + (NW + 24) * (s.slotIndex + 1) + NW / 2;
-      if (rx > maxX) maxX = rx;
+      if (rx > treeMaxX) treeMaxX = rx;
     });
 
-    const svgWidth  = maxX - minX + PAD * 2;
-    const svgHeight = maxY - minY + PAD * 2;
+    // SVG sized to viewport + margin only — prevents react-native-svg from
+    // receiving impossibly large dimensions when a big subtree is expanded
+    const originX = viewX - MARGIN;
+    const originY = viewY - MARGIN;
+    const svgWidth  = viewW + MARGIN * 2;
+    const svgHeight = viewH + MARGIN * 2;
 
-    return { nodes, links, spouseOverlays, svgWidth, svgHeight, originX, originY };
+    return { nodes, links, spouseOverlays, svgWidth, svgHeight, originX, originY, treeMinX, treeMaxX, treeMinY, treeMaxY };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [renderVersion, translateX, translateY, scale, root, appData]);
 }
