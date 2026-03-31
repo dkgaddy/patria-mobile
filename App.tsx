@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useFonts, Cinzel_700Bold } from '@expo-google-fonts/cinzel';
-import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import BottomSheet from '@gorhom/bottom-sheet';
@@ -34,6 +34,8 @@ function ErrorScreen({ message }: { message: string }) {
 
 export default function App() {
   const [fontsLoaded] = useFonts({ Cinzel_700Bold });
+  const { width, height } = useWindowDimensions();
+  const isLandscape = width > height;
 
   const {
     dataError, setAppData, setDataError,
@@ -70,15 +72,15 @@ export default function App() {
   }, []);
 
   const handlePersonSelected = useCallback((id: string) => {
-    bioPanelRef.current?.snapToIndex(0);
-  }, []);
+    if (!isLandscape) bioPanelRef.current?.snapToIndex(0);
+  }, [isLandscape]);
 
   const handleNavigate = useCallback((id: string) => {
     if (!appData?.personsMap[id]) return;
     selectPerson(id);
     setCenterOnId(id);
-    bioPanelRef.current?.snapToIndex(0);
-  }, [appData, selectPerson, setCenterOnId]);
+    if (!isLandscape) bioPanelRef.current?.snapToIndex(0);
+  }, [appData, selectPerson, setCenterOnId, isLandscape]);
 
   const handleBack = useCallback(() => {
     navigateBack();
@@ -111,9 +113,26 @@ export default function App() {
             </TouchableOpacity>
           </View>
 
-          {/* Tree canvas fills remaining space */}
-          <View style={styles.treeArea}>
-            <TreeCanvas onPersonSelected={handlePersonSelected} />
+          {/* Tree + sidebar row */}
+          <View style={[styles.body, isLandscape && styles.bodyRow]}>
+            <View style={styles.treeArea}>
+              <TreeCanvas onPersonSelected={handlePersonSelected} />
+            </View>
+
+            {/* Bio panel — sidebar (landscape) or bottom sheet (portrait) */}
+            {appData && (
+              <BioPanel
+                sheetRef={bioPanelRef}
+                personId={selectedId}
+                appData={appData}
+                navIndex={navIndex}
+                navHistory={navHistory}
+                onNavigate={handleNavigate}
+                onBack={handleBack}
+                onForward={handleForward}
+                mode={isLandscape ? 'sidebar' : 'sheet'}
+              />
+            )}
           </View>
 
           {/* Search modal */}
@@ -123,20 +142,6 @@ export default function App() {
               onClose={() => setSearchOpen(false)}
               appData={appData}
               onSelectPerson={handleNavigate}
-            />
-          )}
-
-          {/* Bio panel — bottom sheet */}
-          {appData && (
-            <BioPanel
-              sheetRef={bioPanelRef}
-              personId={selectedId}
-              appData={appData}
-              navIndex={navIndex}
-              navHistory={navHistory}
-              onNavigate={handleNavigate}
-              onBack={handleBack}
-              onForward={handleForward}
             />
           )}
         </SafeAreaView>
@@ -168,5 +173,7 @@ const styles = StyleSheet.create({
   hbtn:        { backgroundColor: '#3a3a3a', borderWidth: 1, borderColor: '#555', borderRadius: 6, paddingHorizontal: 14, paddingVertical: 8 },
   hbtnText:    { color: '#bbb', fontSize: 15 },
 
+  body:     { flex: 1 },
+  bodyRow:  { flexDirection: 'row' },
   treeArea: { flex: 1 },
 });

@@ -1,5 +1,5 @@
 import React, { useCallback, useRef, useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, ScrollView } from 'react-native';
 import BottomSheet, { BottomSheetScrollView } from '@gorhom/bottom-sheet';
 import { Image } from 'expo-image';
 import { ScriptureText } from '../bible/ScriptureText';
@@ -21,11 +21,13 @@ interface BioPanelProps {
   onNavigate: (id: string) => void;
   onBack: () => void;
   onForward: () => void;
+  mode: 'sheet' | 'sidebar';
 }
 
 export function BioPanel({
   sheetRef, personId, appData,
   navIndex, navHistory, onNavigate, onBack, onForward,
+  mode,
 }: BioPanelProps) {
   const [labelsExpanded, setLabelsExpanded] = useState(false);
   const [photoError, setPhotoError] = useState(false);
@@ -35,7 +37,7 @@ export function BioPanel({
     setCurrentRef(ref);
   }, []);
 
-  // Reset error flag each time the selected person changes
+  // Reset photo error whenever person changes
   const prevPersonIdRef = useRef<string | null>(null);
   if (prevPersonIdRef.current !== personId) {
     prevPersonIdRef.current = personId;
@@ -57,112 +59,124 @@ export function BioPanel({
   const canBack    = navIndex > 0;
   const canForward = navIndex < navHistory.length - 1;
 
+  // ── Shared bio content ────────────────────────────────────────────────────
+  const bioContent = !person ? (
+    <View style={styles.placeholder}>
+      <Text style={styles.placeholderIcon}>📜</Text>
+      <Text style={styles.placeholderTitle}>PATRIA</Text>
+      <Text style={styles.placeholderSub}>Biblical Family Tree</Text>
+      <Text style={styles.placeholderHint}>Tap any person in the tree to view their biography.</Text>
+    </View>
+  ) : (
+    <>
+      {/* Nav history buttons */}
+      {navHistory.length > 1 && (
+        <View style={styles.navRow}>
+          <TouchableOpacity onPress={onBack} disabled={!canBack} style={[styles.navBtn, !canBack && styles.navBtnDisabled]}>
+            <Text style={styles.navBtnText}>◀</Text>
+          </TouchableOpacity>
+          <TouchableOpacity onPress={onForward} disabled={!canForward} style={[styles.navBtn, !canForward && styles.navBtnDisabled]}>
+            <Text style={styles.navBtnText}>▶</Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Name & metadata */}
+      <View style={styles.nameBlock}>
+        <Text style={styles.name}>{displayName}</Text>
+        <Text style={styles.meta}>{sex}{tribe}</Text>
+      </View>
+
+      {/* Photo — circular, centered; hidden only if the image 404s */}
+      {!photoError && (
+        <View style={styles.photoCircleWrap}>
+          <Image
+            key={personId}
+            source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
+            style={styles.photoCircle}
+            contentFit="cover"
+            transition={200}
+            onError={() => setPhotoError(true)}
+          />
+        </View>
+      )}
+
+      {/* Unique attribute / notes */}
+      {(person.unique_attribute || person.person_notes) ? (
+        <View style={styles.notesBlock}>
+          <ScriptureText
+            text={person.unique_attribute || person.person_notes}
+            style={styles.notes}
+            onRefPress={handleRefPress}
+          />
+        </View>
+      ) : null}
+
+      {/* Names & Titles */}
+      {labels.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Names &amp; Titles</Text>
+          <View style={styles.sectionRule} />
+          {visibleLabels.map((l, i) => (
+            <LabelCard key={i} label={l} onRefPress={handleRefPress} />
+          ))}
+          {labels.length > 3 && (
+            <TouchableOpacity onPress={() => setLabelsExpanded(e => !e)} style={styles.showMoreBtn}>
+              <Text style={styles.showMoreText}>
+                {labelsExpanded ? 'Show less ▲' : `Show ${labels.length - 3} more ▼`}
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
+
+      {/* Relationships */}
+      {rels.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Relationships</Text>
+          <View style={styles.sectionRule} />
+          {rels.map((r, i) => (
+            <RelationshipRow
+              key={i}
+              rel={r}
+              targetPerson={appData.personsMap[r.person_id_2]}
+              onNavigate={onNavigate}
+              onRefPress={handleRefPress}
+            />
+          ))}
+        </View>
+      )}
+
+      <View style={{ height: 40 }} />
+    </>
+  );
+
   return (
     <>
-      {/* Single BottomSheet — always mounted so the ref is stable */}
-      <BottomSheet
-        ref={sheetRef}
-        index={-1}
-        snapPoints={SNAP_POINTS}
-        enablePanDownToClose
-        backgroundStyle={styles.background}
-        handleIndicatorStyle={styles.indicator}
-      >
-        <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
-          {!person ? (
-            <View style={styles.placeholder}>
-              <Text style={styles.placeholderIcon}>📜</Text>
-              <Text style={styles.placeholderTitle}>PATRIA</Text>
-              <Text style={styles.placeholderSub}>Biblical Family Tree</Text>
-              <Text style={styles.placeholderHint}>Tap any person in the tree to view their biography.</Text>
-            </View>
-          ) : (
-            <>
-              {/* Nav history buttons */}
-              {navHistory.length > 1 && (
-                <View style={styles.navRow}>
-                  <TouchableOpacity onPress={onBack} disabled={!canBack} style={[styles.navBtn, !canBack && styles.navBtnDisabled]}>
-                    <Text style={styles.navBtnText}>◀</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity onPress={onForward} disabled={!canForward} style={[styles.navBtn, !canForward && styles.navBtnDisabled]}>
-                    <Text style={styles.navBtnText}>▶</Text>
-                  </TouchableOpacity>
-                </View>
-              )}
+      {mode === 'sidebar' ? (
+        // ── Landscape sidebar ───────────────────────────────────────────────
+        <View style={styles.sidebar}>
+          <ScrollView contentContainerStyle={styles.scrollContent}>
+            {bioContent}
+          </ScrollView>
+        </View>
+      ) : (
+        // ── Portrait bottom sheet ───────────────────────────────────────────
+        <BottomSheet
+          ref={sheetRef}
+          index={-1}
+          snapPoints={SNAP_POINTS}
+          enablePanDownToClose
+          backgroundStyle={styles.background}
+          handleIndicatorStyle={styles.indicator}
+        >
+          <BottomSheetScrollView contentContainerStyle={styles.scrollContent}>
+            {bioContent}
+          </BottomSheetScrollView>
+        </BottomSheet>
+      )}
 
-              {/* Name & metadata */}
-              <View style={styles.nameBlock}>
-                <Text style={styles.name}>{displayName}</Text>
-                <Text style={styles.meta}>{sex}{tribe}</Text>
-              </View>
-
-              {/* Photo — circular, centered; hidden only if the image 404s */}
-              {!photoError && (
-                <View style={styles.photoCircleWrap}>
-                  <Image
-                    key={personId}
-                    source={{ uri: `${IMAGE_BASE}${personId}.jpg` }}
-                    style={styles.photoCircle}
-                    contentFit="cover"
-                    transition={200}
-                    onError={() => setPhotoError(true)}
-                  />
-                </View>
-              )}
-
-              {/* Unique attribute / notes */}
-              {(person.unique_attribute || person.person_notes) ? (
-                <View style={styles.notesBlock}>
-                  <ScriptureText
-                    text={person.unique_attribute || person.person_notes}
-                    style={styles.notes}
-                    onRefPress={handleRefPress}
-                  />
-                </View>
-              ) : null}
-
-              {/* Names & Titles */}
-              {labels.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Names &amp; Titles</Text>
-                  <View style={styles.sectionRule} />
-                  {visibleLabels.map((l, i) => (
-                    <LabelCard key={i} label={l} onRefPress={handleRefPress} />
-                  ))}
-                  {labels.length > 3 && (
-                    <TouchableOpacity onPress={() => setLabelsExpanded(e => !e)} style={styles.showMoreBtn}>
-                      <Text style={styles.showMoreText}>
-                        {labelsExpanded ? 'Show less ▲' : `Show ${labels.length - 3} more ▼`}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              )}
-
-              {/* Relationships */}
-              {rels.length > 0 && (
-                <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Relationships</Text>
-                  <View style={styles.sectionRule} />
-                  {rels.map((r, i) => (
-                    <RelationshipRow
-                      key={i}
-                      rel={r}
-                      targetPerson={appData.personsMap[r.person_id_2]}
-                      onNavigate={onNavigate}
-                      onRefPress={handleRefPress}
-                    />
-                  ))}
-                </View>
-              )}
-
-              <View style={{ height: 40 }} />
-            </>
-          )}
-        </BottomSheetScrollView>
-      </BottomSheet>
-
-      {/* Scripture verse sheet (stacked above bio sheet) */}
+      {/* Scripture verse dialog */}
       <ScriptureSheet
         currentRef={currentRef}
         verseMap={appData.verseMap}
@@ -173,11 +187,16 @@ export function BioPanel({
 }
 
 const styles = StyleSheet.create({
+  // Sheet mode
   background:       { backgroundColor: '#faf6ee', borderWidth: 1, borderColor: 'rgba(139,94,60,0.3)', borderRadius: 16 },
   indicator:        { backgroundColor: '#8B5E3C' },
+
+  // Sidebar mode
+  sidebar:          { width: 320, borderLeftWidth: 1, borderLeftColor: 'rgba(139,94,60,0.3)', backgroundColor: '#faf6ee' },
+
   scrollContent:    { paddingBottom: 60 },
 
-  placeholder:      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 8 },
+  placeholder:      { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 8, minHeight: 300 },
   placeholderIcon:  { fontSize: 40 },
   placeholderTitle: { color: '#8B6914', fontSize: 22, fontWeight: 'bold', letterSpacing: 4 },
   placeholderSub:   { color: '#7a5a3a', fontSize: 12, letterSpacing: 1 },
