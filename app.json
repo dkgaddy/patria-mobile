@@ -12,7 +12,12 @@
       "backgroundColor": "#1a0e08"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.explosiveconcepts.patria",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -32,6 +37,11 @@
     ],
     "assetBundlePatterns": [
       "assets/**"
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "fad42c72-f85c-4d64-97f2-7ef78afee0dc"
+      }
+    }
   }
 }

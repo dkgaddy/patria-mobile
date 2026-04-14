@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useRef } from 'react';
 import { useFonts, Cinzel_700Bold } from '@expo-google-fonts/cinzel';
+import { FontAwesome5 } from '@expo/vector-icons';
 import { StyleSheet, Text, View, ActivityIndicator, SafeAreaView, TouchableOpacity, useWindowDimensions } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
@@ -11,6 +12,8 @@ import { useTreeStore } from './src/store/useTreeStore';
 import { TreeCanvas } from './src/tree/TreeCanvas';
 import { BioPanel } from './src/bio/BioPanel';
 import { SearchSheet } from './src/search/SearchSheet';
+import { PaywallModal } from './src/purchases/PaywallModal';
+import { usePurchases } from './src/purchases/usePurchases';
 import type { AppData } from './src/data/types';
 
 function LoadingScreen() {
@@ -41,8 +44,17 @@ export default function App() {
     dataError, setAppData, setDataError,
     selectedId, appData, selectPerson,
     navHistory, navIndex, navigateBack, navigateForward,
+    isPro,
   } = useAppStore();
-  const { setCenterOnId, bumpFitView, bumpCenterRoot } = useTreeStore();
+  const { setCenterOnId, bumpCenterRoot } = useTreeStore();
+  const { purchasePro, restorePurchases } = usePurchases();
+
+  const [paywallVisible, setPaywallVisible] = React.useState(false);
+
+  const isPersonLocked = useCallback((id: string): boolean => {
+    if (isPro) return false;
+    return !(appData?.freePersonIds.has(id) ?? true);
+  }, [isPro, appData]);
 
   const handleCenter = useCallback(() => {
     if (selectedId && appData?.personsMap[selectedId]) {
@@ -75,6 +87,10 @@ export default function App() {
     if (!isLandscape) bioPanelRef.current?.snapToIndex(0);
   }, [isLandscape]);
 
+  const handleUnlockPress = useCallback(() => {
+    setPaywallVisible(true);
+  }, []);
+
   const handleNavigate = useCallback((id: string) => {
     if (!appData?.personsMap[id]) return;
     selectPerson(id);
@@ -102,8 +118,8 @@ export default function App() {
           {/* Header */}
           <View style={styles.header}>
             <Text style={styles.headerTitle}>PATRIA</Text>
-            <TouchableOpacity onPress={bumpFitView} style={styles.hbtn} hitSlop={8}>
-              <Text style={styles.hbtnText}>Fit</Text>
+            <TouchableOpacity onPress={bumpCenterRoot} style={styles.hbtn} hitSlop={8}>
+              <FontAwesome5 name="home" size={15} color="#bbb" />
             </TouchableOpacity>
             <TouchableOpacity onPress={handleCenter} style={styles.hbtn} hitSlop={8}>
               <Text style={styles.hbtnText}>Center</Text>
@@ -116,7 +132,10 @@ export default function App() {
           {/* Tree + sidebar row */}
           <View style={[styles.body, isLandscape && styles.bodyRow]}>
             <View style={styles.treeArea}>
-              <TreeCanvas onPersonSelected={handlePersonSelected} />
+              <TreeCanvas
+                onPersonSelected={handlePersonSelected}
+                isPersonLocked={isPersonLocked}
+              />
             </View>
 
             {/* Bio panel — sidebar (landscape) or bottom sheet (portrait) */}
@@ -131,6 +150,8 @@ export default function App() {
                 onBack={handleBack}
                 onForward={handleForward}
                 mode={isLandscape ? 'sidebar' : 'sheet'}
+                isPersonLocked={isPersonLocked}
+                onUnlockPress={handleUnlockPress}
               />
             )}
           </View>
@@ -141,9 +162,18 @@ export default function App() {
               isOpen={searchOpen}
               onClose={() => setSearchOpen(false)}
               appData={appData}
+              isPersonLocked={isPersonLocked}
               onSelectPerson={handleNavigate}
             />
           )}
+
+          {/* Paywall */}
+          <PaywallModal
+            visible={paywallVisible}
+            onClose={() => setPaywallVisible(false)}
+            onPurchase={purchasePro}
+            onRestore={restorePurchases}
+          />
         </SafeAreaView>
       )}
     </GestureHandlerRootView>

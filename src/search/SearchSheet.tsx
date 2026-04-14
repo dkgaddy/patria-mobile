@@ -12,10 +12,11 @@ interface SearchSheetProps {
   isOpen: boolean;
   onClose: () => void;
   appData: AppData;
+  isPersonLocked: (id: string) => boolean;
   onSelectPerson: (id: string) => void;
 }
 
-export function SearchSheet({ isOpen, onClose, appData, onSelectPerson }: SearchSheetProps) {
+export function SearchSheet({ isOpen, onClose, appData, isPersonLocked, onSelectPerson }: SearchSheetProps) {
   const [query, setQuery] = useState('');
   const inputRef = useRef<TextInput>(null);
   const results = useSearch(appData.personsMap, query);
@@ -36,13 +37,15 @@ export function SearchSheet({ isOpen, onClose, appData, onSelectPerson }: Search
   const renderItem = ({ item }: { item: SearchResult }) => {
     const { id, person, matchField } = item;
     const displayName = person.person_name + (person.surname ? ' ' + person.surname : '');
+    const locked = isPersonLocked(id);
     return (
       <TouchableOpacity style={styles.resultRow} onPress={() => handleSelect(id)}>
         <View style={styles.resultMain}>
-          <Text style={styles.resultName}>{displayName}</Text>
+          <Text style={[styles.resultName, locked && styles.resultNameLocked]}>{displayName}</Text>
           {person.tribe ? <Text style={styles.resultTribe}>{person.tribe}</Text> : null}
+          {locked && <Text style={styles.lockBadge}>🔒</Text>}
         </View>
-        {matchField === 'attribute' && (
+        {matchField === 'attribute' && !locked && (
           <Text style={styles.resultSnippet} numberOfLines={1}>
             {(person.unique_attribute || person.person_notes || '').slice(0, 60)}…
           </Text>
@@ -130,7 +133,9 @@ const styles = StyleSheet.create({
   list:        { paddingHorizontal: 16, paddingBottom: 40 },
   resultRow:   { paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: 'rgba(0,0,0,0.08)' },
   resultMain:  { flexDirection: 'row', alignItems: 'center', gap: 10 },
-  resultName:  { color: '#2a1208', fontSize: 15, fontWeight: '600', flex: 1 },
-  resultTribe: { color: '#7a5a3a', fontSize: 12 },
-  resultSnippet:{ color: '#9a7a5a', fontSize: 11, marginTop: 3 },
+  resultName:       { color: '#2a1208', fontSize: 15, fontWeight: '600', flex: 1 },
+  resultNameLocked: { color: '#9a7a5a' },
+  resultTribe:      { color: '#7a5a3a', fontSize: 12 },
+  resultSnippet:    { color: '#9a7a5a', fontSize: 11, marginTop: 3 },
+  lockBadge:        { fontSize: 13 },
 });

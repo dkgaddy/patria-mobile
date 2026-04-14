@@ -15,13 +15,14 @@ interface SpouseOverlayProps {
   isConcubine: boolean;
   person: PersonRecord;
   isSelected: boolean;
+  isLocked: boolean;
   onPress: (id: string) => void;
   clipId: string;
 }
 
 function SpouseOverlayInner({
   wifeId, husbandX, husbandY, slotIndex,
-  isConcubine, person, isSelected, onPress, clipId,
+  isConcubine, person, isSelected, isLocked, onPress, clipId,
 }: SpouseOverlayProps) {
   // Position: to the right of the husband card
   const wifeX = husbandX + (NW / 2) + SPOUSE_GAP * (slotIndex + 1);
@@ -58,6 +59,7 @@ function SpouseOverlayInner({
         isSelected={isSelected}
         hasChildren={false}
         isCollapsed={false}
+        isLocked={isLocked}
         onPress={onPress}
         onToggle={() => {}}
         clipId={clipId}
@@ -70,5 +72,6 @@ export const SpouseOverlay = React.memo(SpouseOverlayInner, (prev, next) =>
   prev.husbandX  === next.husbandX &&
   prev.husbandY  === next.husbandY &&
   prev.slotIndex === next.slotIndex &&
-  prev.isSelected === next.isSelected
+  prev.isSelected === next.isSelected &&
+  prev.isLocked  === next.isLocked
 );

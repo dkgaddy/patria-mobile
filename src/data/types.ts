@@ -82,4 +82,5 @@ export interface AppData {
   wifeOfMap: Record<string, string>;       // wife_id → husband_id
   concubineSet: Set<string>;
   verseMap: Record<string, string>;        // "GEN.1.1" → verse text
+  freePersonIds: Set<string>;              // ancestors of Abram_1 (inclusive) + their spouses — free tier
 }

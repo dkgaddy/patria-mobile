@@ -13,14 +13,15 @@ import { useAppStore } from '../store/useAppStore';
 import { useTreeStore } from '../store/useTreeStore';
 import type { D3Node } from '../data/hierarchy';
 
-const MIN_SCALE = 0.04;
+const MIN_SCALE = 0.5;
 const MAX_SCALE = 4;
 
 interface TreeCanvasProps {
   onPersonSelected: (id: string) => void;
+  isPersonLocked: (id: string) => boolean;
 }
 
-export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
+export function TreeCanvas({ onPersonSelected, isPersonLocked }: TreeCanvasProps) {
   const { width: screenW, height: screenH } = useWindowDimensions();
   const { appData, treeLayout, selectPerson, selectedId } = useAppStore();
   const {
@@ -52,6 +53,14 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
     bumpRender(); // resize the viewport-based SVG for the new scale/position
   }, [setTransform, bumpRender]);
 
+  const lastSnapRef = useRef(0);
+  const updateSnapshotThrottled = useCallback((tx: number, ty: number, s: number) => {
+    const now = Date.now();
+    if (now - lastSnapRef.current < 150) return;
+    lastSnapRef.current = now;
+    updateSnapshot(tx, ty, s);
+  }, [updateSnapshot]);
+
   // ── Pan gesture ────────────────────────────────────────────────────────────
   const panGesture = Gesture.Pan()
     .maxPointers(1)
@@ -82,9 +91,12 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
       // Zoom anchored to screen center — what's at the center stays at the center
       const cx = screenW / 2;
       const cy = screenH / 2;
-      translateX.value = cx + (savedTx.value - cx) * (newScale / savedScale.value);
-      translateY.value = cy + (savedTy.value - cy) * (newScale / savedScale.value);
+      const newTx = cx + (savedTx.value - cx) * (newScale / savedScale.value);
+      const newTy = cy + (savedTy.value - cy) * (newScale / savedScale.value);
+      translateX.value = newTx;
+      translateY.value = newTy;
       scale.value      = newScale;
+      runOnJS(updateSnapshotThrottled)(newTx, newTy, newScale);
     })
     .onEnd(() => {
       savedTx.value    = translateX.value;
@@ -254,6 +266,7 @@ export function TreeCanvas({ onPersonSelected }: TreeCanvasProps) {
             layout={layout}
             appData={appData}
             selectedId={selectedId}
+            isPersonLocked={isPersonLocked}
             onSelectPerson={handleSelectPerson}
             onToggle={handleToggle}
           />

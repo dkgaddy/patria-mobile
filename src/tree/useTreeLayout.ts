@@ -43,7 +43,7 @@ export function useTreeLayout(
     const viewH = screenH / scale;
 
     // Cull nodes to viewport + margin
-    const MARGIN = 400;
+    const MARGIN = 800;
     const rawNodes = getPositionedNodes(root, viewX, viewY, viewW, viewH, MARGIN);
     const nodes: PositionedNode[] = rawNodes.map(n => ({
       ...n,
@@ -60,7 +60,18 @@ export function useTreeLayout(
       appData.concubineSet,
       appData.personsMap,
     );
-    const spouseOverlays = allSpouseOverlays.filter(s => visibleIds.has(s.husbandId));
+    const spouseOverlays = allSpouseOverlays.filter(s => {
+      if (visibleIds.has(s.husbandId)) return true;
+      // Include wife if she herself is within the culled viewport
+      // (husband may have scrolled off-screen left while wives are still visible right)
+      const wifeX = s.husbandX + NW / 2 + (NW + 24) * (s.slotIndex + 1);
+      const wifeY = s.husbandY;
+      const minX  = viewX - MARGIN;
+      const maxX  = viewX + viewW + MARGIN;
+      const minY  = viewY - MARGIN;
+      const maxY  = viewY + viewH + MARGIN;
+      return wifeX + NW > minX && wifeX < maxX && wifeY + NH > minY && wifeY < maxY;
+    });
 
     // Full tree bounding box — needed by Fit, NOT used for SVG dimensions
     let treeMinX = 0, treeMaxX = 0, treeMinY = 0, treeMaxY = 0;

@@ -22,12 +22,14 @@ interface BioPanelProps {
   onBack: () => void;
   onForward: () => void;
   mode: 'sheet' | 'sidebar';
+  isPersonLocked: (id: string) => boolean;
+  onUnlockPress: () => void;
 }
 
 export function BioPanel({
   sheetRef, personId, appData,
   navIndex, navHistory, onNavigate, onBack, onForward,
-  mode,
+  mode, isPersonLocked, onUnlockPress,
 }: BioPanelProps) {
   const [labelsExpanded, setLabelsExpanded] = useState(false);
   const [photoError, setPhotoError] = useState(false);
@@ -45,6 +47,7 @@ export function BioPanel({
   }
 
   const person = personId ? appData.personsMap[personId] : null;
+  const isLocked = !!(personId && isPersonLocked(personId));
 
   const labels = person ? (appData.labelsMap[personId!] ?? []) : [];
   const rels   = person ? (appData.relsMap[personId!] ?? []).filter(r => {
@@ -60,6 +63,21 @@ export function BioPanel({
   const canForward = navIndex < navHistory.length - 1;
 
   // ── Shared bio content ────────────────────────────────────────────────────
+  const lockedContent = (
+    <View style={styles.lockedWrap}>
+      <Text style={styles.lockedIcon}>🔒</Text>
+      <Text style={styles.lockedTitle}>Premium Content</Text>
+      <Text style={styles.lockedName}>{person?.person_name ?? ''}</Text>
+      <Text style={styles.lockedDesc}>
+        Unlock the full PATRIA tree to explore this figure's complete biography,
+        names &amp; titles, relationships, and scripture references.
+      </Text>
+      <TouchableOpacity style={styles.unlockBtn} onPress={onUnlockPress} activeOpacity={0.85}>
+        <Text style={styles.unlockBtnText}>Unlock Full Tree</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   const bioContent = !person ? (
     <View style={styles.placeholder}>
       <Text style={styles.placeholderIcon}>📜</Text>
@@ -67,7 +85,7 @@ export function BioPanel({
       <Text style={styles.placeholderSub}>Biblical Family Tree</Text>
       <Text style={styles.placeholderHint}>Tap any person in the tree to view their biography.</Text>
     </View>
-  ) : (
+  ) : isLocked ? lockedContent : (
     <>
       {/* Nav history buttons */}
       {navHistory.length > 1 && (
@@ -223,4 +241,12 @@ const styles = StyleSheet.create({
 
   showMoreBtn:      { alignItems: 'center', paddingVertical: 10 },
   showMoreText:     { color: '#8B5E3C', fontSize: 12, fontWeight: '700', letterSpacing: 0.5 },
+
+  lockedWrap:   { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 10, minHeight: 320 },
+  lockedIcon:   { fontSize: 40 },
+  lockedTitle:  { color: '#8B6914', fontSize: 16, fontWeight: '700', letterSpacing: 2, textTransform: 'uppercase' },
+  lockedName:   { color: '#2a1208', fontSize: 22, fontWeight: '700', fontStyle: 'italic' },
+  lockedDesc:   { color: '#7a5a3a', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 4 },
+  unlockBtn:    { backgroundColor: '#c8a85a', borderRadius: 10, paddingVertical: 14, paddingHorizontal: 32, marginTop: 8 },
+  unlockBtnText:{ color: '#2a1208', fontSize: 15, fontWeight: '800' },
 });

@@ -14,12 +14,16 @@ interface AppState {
   navHistory: string[];
   navIndex: number;
 
+  // Purchases
+  isPro: boolean;
+
   // Actions
   setAppData: (data: AppData, layout: TreeLayout) => void;
   setDataError: (err: string) => void;
   selectPerson: (id: string) => void;
   navigateBack: () => string | null;
   navigateForward: () => string | null;
+  setIsPro: (v: boolean) => void;
 }
 
 export const useAppStore = create<AppState>((set, get) => ({
@@ -30,6 +34,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   selectedId:  null,
   navHistory:  [],
   navIndex:    -1,
+  isPro:       false,
 
   setAppData: (data, layout) => set({ appData: data, treeLayout: layout, dataLoaded: true }),
   setDataError: (err) => set({ dataError: err }),
@@ -59,4 +64,6 @@ export const useAppStore = create<AppState>((set, get) => ({
     set({ navIndex: newIndex, selectedId: id });
     return id;
   },
+
+  setIsPro: (v) => set({ isPro: v }),
 }));

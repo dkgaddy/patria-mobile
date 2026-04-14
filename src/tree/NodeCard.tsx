@@ -8,6 +8,9 @@ import type { PersonRecord } from '../data/types';
 const FA_ICON_TRANSFORM = 'scale(0.03515625) translate(-256 -256)';
 export const FA_CIRCLE_PLUS  = 'M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM232 344V280H168c-13.3 0-24-10.7-24-24s10.7-24 24-24h64V168c0-13.3 10.7-24 24-24s24 10.7 24 24v64h64c13.3 0 24 10.7 24 24s-10.7 24-24 24H280v64c0 13.3-10.7 24-24 24s-24-10.7-24-24z';
 export const FA_CIRCLE_MINUS = 'M256 512A256 256 0 1 0 256 0a256 256 0 1 0 0 512zM184 232H328c13.3 0 24 10.7 24 24s-10.7 24-24 24H184c-13.3 0-24-10.7-24-24s10.7-24 24-24z';
+// FA lock icon path (solid, viewBox 0 0 448 512)
+const FA_LOCK_TRANSFORM = 'scale(0.03515625) translate(-224 -256)';
+const FA_LOCK = 'M144 144v48H304V144c0-44.2-35.8-80-80-80s-80 35.8-80 80zM80 192V144C80 64.5 144.5 0 224 0s144 64.5 144 144v48h16c35.3 0 64 28.7 64 64V448c0 35.3-28.7 64-64 64H64c-35.3 0-64-28.7-64-64V256c0-35.3 28.7-64 64-64H80z';
 
 const IMAGE_BASE = 'https://patria.explosiveconcepts.com/pix/';
 
@@ -19,13 +22,14 @@ interface NodeCardProps {
   isSelected: boolean;
   hasChildren: boolean;
   isCollapsed: boolean;
+  isLocked: boolean;
   onPress: (id: string) => void;
   onToggle: (id: string) => void;
   clipId: string; // unique clip-path id for this card
 }
 
 function NodeCardInner({
-  id, x, y, person, isSelected, hasChildren, isCollapsed, onPress, onToggle, clipId,
+  id, x, y, person, isSelected, hasChildren, isCollapsed, isLocked, onPress, onToggle, clipId,
 }: NodeCardProps) {
   const sex = (person.sex || '').toLowerCase();
   const c   = getCardColors(sex, id);
@@ -163,6 +167,23 @@ function NodeCardInner({
           </G>
         </G>
       )}
+
+      {/* Lock overlay for premium content */}
+      {isLocked && (
+        <>
+          <Rect
+            width={NW} height={NH}
+            rx={8} ry={8}
+            fill="rgba(20,10,5,0.55)"
+          />
+          <G transform={`translate(${AV_CX}, ${AV_CY})`}>
+            <Circle cx={0} cy={0} r={14} fill="rgba(200,168,90,0.9)" />
+            <G transform={FA_LOCK_TRANSFORM}>
+              <Path d={FA_LOCK} fill="#2a1208" />
+            </G>
+          </G>
+        </>
+      )}
     </G>
   );
 }
@@ -172,5 +193,6 @@ export const NodeCard = React.memo(NodeCardInner, (prev, next) =>
   prev.y === next.y &&
   prev.isSelected  === next.isSelected &&
   prev.isCollapsed === next.isCollapsed &&
-  prev.hasChildren === next.hasChildren
+  prev.hasChildren === next.hasChildren &&
+  prev.isLocked    === next.isLocked
 );

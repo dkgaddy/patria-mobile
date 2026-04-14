@@ -108,5 +108,18 @@ export async function loadAppData(): Promise<AppData> {
       childrenMap[parentId].push(childId);
   });
 
-  return { personsMap, labelsMap, relsMap, childrenMap, spouseMap, wifeOfMap, concubineSet, verseMap };
+  // Compute free tier: ancestors of Abram_1 (inclusive) + their spouses
+  // Walk up from Abram_1 using tempFatherMap (child → father)
+  const freePersonIds = new Set<string>();
+  let current: string | undefined = 'Abram_1';
+  while (current && personsMap[current]) {
+    freePersonIds.add(current);
+    current = tempFatherMap[current];
+  }
+  // Add spouses of every free ancestor
+  freePersonIds.forEach(id => {
+    (spouseMap[id] ?? []).forEach(w => freePersonIds.add(w));
+  });
+
+  return { personsMap, labelsMap, relsMap, childrenMap, spouseMap, wifeOfMap, concubineSet, verseMap, freePersonIds };
 }

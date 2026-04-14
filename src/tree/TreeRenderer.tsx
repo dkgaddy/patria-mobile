@@ -18,12 +18,13 @@ interface TreeRendererProps {
   layout: TreeLayoutResult;
   appData: AppData;
   selectedId: string | null;
+  isPersonLocked: (id: string) => boolean;
   onSelectPerson: (id: string) => void;
   onToggle: (id: string) => void;
 }
 
 export function TreeRenderer({
-  layout, appData, selectedId, onSelectPerson, onToggle,
+  layout, appData, selectedId, isPersonLocked, onSelectPerson, onToggle,
 }: TreeRendererProps) {
   const { nodes, links, spouseOverlays, svgWidth, svgHeight, originX, originY } = layout;
 
@@ -63,6 +64,7 @@ export function TreeRenderer({
             isConcubine={s.isConcubine}
             person={appData.personsMap[s.wifeId] ?? {} as any}
             isSelected={selectedId === s.wifeId}
+            isLocked={isPersonLocked(s.wifeId)}
             onPress={onSelectPerson}
             clipId={`clip-${s.wifeId}`}
           />
@@ -79,6 +81,7 @@ export function TreeRenderer({
             isSelected={selectedId === node.id}
             hasChildren={node.hasChildren}
             isCollapsed={node.isCollapsed}
+            isLocked={isPersonLocked(node.id)}
             onPress={onSelectPerson}
             onToggle={handleToggle}
             clipId={`clip-${node.id}`}
