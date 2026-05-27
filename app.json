@@ -20,6 +20,7 @@
       }
     },
     "android": {
+      "package": "com.explosiveconcepts.patria",
       "adaptiveIcon": {
         "backgroundColor": "#1a0e08",
         "foregroundImage": "./assets/android-icon-foreground.png",
